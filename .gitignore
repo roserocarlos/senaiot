@@ -1,0 +1,4 @@
+.env
+mosquitto/config/passwd
+homeassistant/config/
+nginx/nginx.conf

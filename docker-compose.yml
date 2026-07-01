@@ -1,0 +1,124 @@
+# =============================================================================
+# senaiot — Stack IoT Laboratorio SENA SENNOVA
+# Basado en MING Stack (roserocarlos/Ming) + Home Assistant
+#
+# Servicios:
+#   Mosquitto    — broker MQTT con autenticación
+#   InfluxDB     — historial series temporales
+#   Node-RED     — transformación + alertas automáticas
+#   Grafana      — panel admin técnico (instructores)
+#   Home Assistant — autodescubrimiento ESPHome + automatizaciones
+#   Nginx        — dashboard laboratorio + proxy APIs
+#
+# Deploy:
+#   git clone https://github.com/roserocarlos/senaiot
+#   cd senaiot && bash deploy.sh
+# =============================================================================
+
+services:
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: sena_mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    networks:
+      - sena_net
+
+  influxdb:
+    image: influxdb:2.7
+    container_name: sena_influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USER}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_PASSWORD}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN}
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - influxdb_config:/etc/influxdb2
+    networks:
+      - sena_net
+
+  nodered:
+    image: nodered/node-red:latest
+    container_name: sena_nodered
+    restart: unless-stopped
+    ports:
+      - "1880:1880"
+    environment:
+      - TZ=America/Bogota
+      - NODE_RED_CREDENTIAL_SECRET=${NODE_RED_SECRET}
+    volumes:
+      - nodered_data:/data
+    depends_on:
+      - mosquitto
+      - influxdb
+    networks:
+      - sena_net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sena_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - influxdb
+    networks:
+      - sena_net
+
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: sena_homeassistant
+    restart: unless-stopped
+    # Modo host: necesario para autodescubrimiento ESPHome (mDNS/Zeroconf)
+    network_mode: host
+    privileged: true
+    environment:
+      - TZ=America/Bogota
+    volumes:
+      - ./homeassistant/config:/config
+
+  nginx:
+    image: nginx:alpine
+    container_name: sena_nginx
+    restart: unless-stopped
+    ports:
+      - "8087:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/html:/usr/share/nginx/html:ro
+    depends_on:
+      - influxdb
+      - mosquitto
+    networks:
+      - sena_net
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:
+  influxdb_data:
+  influxdb_config:
+  nodered_data:
+  grafana_data:
+
+networks:
+  sena_net:
+    driver: bridge
