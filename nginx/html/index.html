@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#39A900">
+<title>Lab. Microbiología — SENA</title>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   PALETA OFICIAL SENA — Manual Identidad Visual 2024
+   Resolución 1825 de 2024
+═══════════════════════════════════════════════ */
+:root{
+  /* Colores SENA */
+  --sena-verde:    #39A900;
+  --sena-verde-osc:#007832;
+  --sena-azul-osc: #00304D;
+  --sena-violeta:  #71277A;
+  --sena-amarillo: #FDC300;
+  --sena-azul-clr: #82DEF0;
+
+  /* Semáforo */
+  --ok:    #39A900;
+  --warn:  #FDC300;
+  --crit:  #C8102E;
+
+  /* Neutros */
+  --bg:    #F4F7F4;
+  --bg2:   #E8F0E8;
+  --surf:  #FFFFFF;
+  --ink:   #1A2E1A;
+  --muted: #4A6B4A;
+  --faint: #8AAB8A;
+  --line:  rgba(0,120,50,.12);
+
+  /* Tipografía oficial SENA */
+  --f: 'Work Sans', Calibri, system-ui, sans-serif;
+  --r8:8px;--r12:12px;--r16:16px;--r20:20px;--pill:999px;
+  --sh: 0 4px 20px rgba(57,169,0,.12);
+  --tab-h: 60px;
+  --top-h: 70px;
+  --ease: cubic-bezier(.22,.68,0,1.18);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{height:100%;-webkit-tap-highlight-color:transparent}
+body{height:100%;font-family:var(--f);font-weight:400;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+@keyframes loadbar{from{width:0}to{width:100%}}
+@keyframes slideIn{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+
+/* ═══ LOADING ═══ */
+.loading-overlay{position:fixed;inset:0;background:var(--sena-azul-osc);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .6s}
+.loading-overlay.hidden{opacity:0;pointer-events:none}
+.load-logo{display:flex;gap:16px;align-items:center;margin-bottom:20px}
+.load-logo img{height:48px;filter:brightness(0) invert(1)}
+.load-msg{font-size:13px;color:rgba(255,255,255,.7);margin-bottom:16px}
+.load-bar{width:200px;height:3px;background:rgba(255,255,255,.15);border-radius:var(--pill);overflow:hidden}
+.load-fill{height:100%;background:var(--sena-verde);animation:loadbar 2.5s ease forwards}
+
+/* ═══ TOPBAR ═══ */
+.topbar{
+  height:var(--top-h);background:var(--surf);flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;border-bottom:3px solid var(--sena-verde);
+  box-shadow:0 2px 12px rgba(57,169,0,.10);position:relative;z-index:100;
+}
+.top-logos{display:flex;align-items:center;gap:12px}
+.top-logos img{height:36px;object-fit:contain}
+.top-logos .sep{width:1px;height:28px;background:var(--line)}
+.top-center{display:flex;flex-direction:column;align-items:center}
+.lab-name{font-size:15px;font-weight:700;color:var(--sena-azul-osc);letter-spacing:-.01em;line-height:1.1}
+.lab-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.top-right{display:flex;align-items:center;gap:8px}
+.conn-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);background:var(--bg);border-radius:var(--pill);padding:4px 10px;border:1px solid var(--line)}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:#C8102E;transition:background .3s;flex-shrink:0}
+.conn-dot.on{background:var(--sena-verde);animation:blink 2.5s infinite}
+.health-bar{height:4px;background:var(--bg2);flex-shrink:0;display:flex;gap:1px}
+.hb-seg{flex:1;transition:background .5s}
+
+/* ═══ LAYOUT ═══ */
+.app{display:flex;height:calc(100vh - var(--top-h) - 4px)}
+.sidebar{width:300px;flex-shrink:0;background:var(--surf);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+.main-area{flex:1;overflow-y:auto;background:var(--bg);padding:16px}
+.main-area::-webkit-scrollbar{width:4px}
+.main-area::-webkit-scrollbar-thumb{background:var(--sena-verde);border-radius:9px}
+
+/* ═══ SIDEBAR NAV ═══ */
+.snav{display:flex;border-bottom:2px solid var(--line)}
+.snav-btn{flex:1;padding:11px 4px;border:none;background:none;font-family:var(--f);font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.snav-btn.active{color:var(--sena-verde-osc);border-bottom-color:var(--sena-verde)}
+.spanel{flex:1;overflow-y:auto;padding:10px}
+.spanel::-webkit-scrollbar{width:3px}
+.spanel::-webkit-scrollbar-thumb{background:var(--sena-verde);border-radius:9px}
+
+/* ═══ HEALTH WIDGET ═══ */
+.health-widget{
+  margin:10px;padding:12px 14px;
+  background:var(--sena-azul-osc);border-radius:var(--r16);
+  display:flex;align-items:center;gap:12px;
+}
+.health-circle{width:52px;height:52px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative}
+.health-circle svg{position:absolute;top:0;left:0;transform:rotate(-90deg)}
+.health-num{font-size:20px;font-weight:700;color:#fff;line-height:1;position:relative;z-index:1}
+.health-info{flex:1}
+.health-label{font-size:11px;font-weight:600;margin-bottom:2px}
+.health-label.good{color:var(--sena-verde)}
+.health-label.warn{color:var(--sena-amarillo)}
+.health-label.crit{color:#ff6b6b}
+.health-desc{font-size:10px;color:rgba(255,255,255,.6);line-height:1.4}
+
+/* ═══ SENSOR CARDS ═══ */
+.sensor-card{
+  background:var(--bg);border:1.5px solid var(--line);border-radius:var(--r16);
+  padding:11px;margin-bottom:7px;cursor:pointer;transition:all .2s var(--ease);
+}
+.sensor-card:hover{border-color:var(--sena-verde);transform:translateX(2px);box-shadow:var(--sh)}
+.sensor-card.active{border-color:var(--sena-verde);background:var(--bg2);box-shadow:var(--sh)}
+.sc-top{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+.sc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.st-online{background:var(--sena-verde);animation:pulse 2.5s infinite}
+.st-degraded{background:var(--sena-amarillo);animation:blink 1.5s infinite}
+.st-offline{background:var(--crit)}
+.sc-name{font-size:13px;font-weight:600;color:var(--ink);flex:1;line-height:1.2}
+.sc-time{font-size:10px;color:var(--faint);white-space:nowrap}
+.sc-status{font-size:11px;font-weight:600;margin-bottom:6px;padding:3px 8px;border-radius:var(--pill);display:inline-block}
+.sc-status.ok{background:rgba(57,169,0,.12);color:var(--sena-verde-osc)}
+.sc-status.warn{background:rgba(253,195,0,.15);color:#7A5C00}
+.sc-status.crit{background:rgba(200,16,46,.10);color:var(--crit)}
+.kpi-mini{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px}
+.km{background:var(--surf);border-radius:var(--r8);padding:7px 9px;border:1px solid var(--line)}
+.km-v{font-size:16px;font-weight:700;line-height:1;color:var(--sena-verde-osc)}
+.km-l{font-size:9px;color:var(--muted);margin-top:2px}
+
+/* ═══ MAIN CONTENT ═══ */
+.grid-sensores{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:16px}
+
+.sensor-detail-card{
+  background:var(--surf);border-radius:var(--r20);
+  border:1.5px solid var(--line);overflow:hidden;
+  box-shadow:var(--sh);animation:fadeUp .3s var(--ease) both;
+}
+.sdc-header{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.sdc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.sdc-name{font-size:15px;font-weight:700;color:var(--ink);flex:1}
+.sdc-time{font-size:10px;color:var(--faint)}
+.sdc-body{padding:14px}
+
+/* KPI grande */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.kpi-big{border-radius:var(--r12);padding:14px;border:2px solid var(--line);text-align:center;transition:border-color .3s}
+.kpi-big.ok{border-color:rgba(57,169,0,.3);background:rgba(57,169,0,.05)}
+.kpi-big.warn{border-color:rgba(253,195,0,.4);background:rgba(253,195,0,.07)}
+.kpi-big.crit{border-color:rgba(200,16,46,.3);background:rgba(200,16,46,.05)}
+.kpi-icon{font-size:22px;margin-bottom:4px}
+.kpi-value{font-size:32px;font-weight:700;line-height:1;margin-bottom:2px}
+.kpi-value.ok{color:var(--sena-verde-osc)}
+.kpi-value.warn{color:#7A5C00}
+.kpi-value.crit{color:var(--crit)}
+.kpi-label{font-size:11px;color:var(--muted);font-weight:500}
+.kpi-range{font-size:10px;color:var(--faint);margin-top:3px}
+
+/* Banda de estado */
+.status-band{border-radius:var(--r12);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.status-band.ok{background:rgba(57,169,0,.08);border:1.5px solid rgba(57,169,0,.25)}
+.status-band.warn{background:rgba(253,195,0,.10);border:1.5px solid rgba(253,195,0,.35)}
+.status-band.crit{background:rgba(200,16,46,.08);border:1.5px solid rgba(200,16,46,.25)}
+.status-ico{font-size:20px;flex-shrink:0}
+.status-txt{font-size:13px;line-height:1.4;font-weight:500}
+.status-txt.ok{color:var(--sena-verde-osc)}
+.status-txt.warn{color:#7A5C00}
+.status-txt.crit{color:var(--crit)}
+
+/* Gráfica */
+.chart-wrap{height:90px;margin-bottom:10px}
+.chart-label{font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.hw-tags{display:flex;gap:5px;flex-wrap:wrap}
+.hw-tag{background:var(--bg);border:1px solid var(--line);border-radius:var(--pill);padding:2px 8px;font-size:10px;color:var(--muted)}
+
+/* ═══ ALERTAS ═══ */
+.alert-item{display:flex;align-items:flex-start;gap:8px;background:var(--bg);border-radius:var(--r12);padding:9px 11px;margin-bottom:6px;border-left:3px solid var(--line);animation:fadeUp .3s var(--ease) both}
+.alert-item.ok{border-left-color:var(--sena-verde)}
+.alert-item.warn{border-left-color:var(--sena-amarillo)}
+.alert-item.crit{border-left-color:var(--crit)}
+.al-msg{font-size:11px;color:var(--ink);line-height:1.45}
+.al-time{font-size:10px;color:var(--faint);margin-top:2px}
+
+/* ═══ FOOTER ═══ */
+.footer{
+  border-top:2px solid var(--sena-verde);background:var(--surf);
+  padding:8px 16px;display:flex;align-items:center;justify-content:center;gap:8px;
+  flex-shrink:0;
+}
+.footer-logo{height:20px;object-fit:contain}
+.footer-txt{font-size:11px;color:var(--muted)}
+.footer-link{color:var(--sena-verde-osc);font-weight:600;text-decoration:none}
+.footer-link:hover{text-decoration:underline}
+
+/* ═══ MOBILE ═══ */
+@media(max-width:767px){
+  body{overflow:hidden}
+  .topbar{height:56px;padding:0 10px}
+  .top-logos img{height:28px}
+  .lab-name{font-size:12px}
+  .lab-sub{display:none}
+  .app{flex-direction:column;height:calc(100vh - 56px - 4px - var(--tab-h))}
+  .sidebar{width:100%;height:100%;display:none;flex-direction:column}
+  .sidebar.active{display:flex}
+  .main-area{display:none;padding:10px}
+  .main-area.active{display:block}
+  .tab-bar{display:flex;position:fixed;bottom:0;left:0;right:0;height:var(--tab-h);background:var(--surf);border-top:2px solid var(--sena-verde);z-index:200;padding-bottom:env(safe-area-inset-bottom)}
+  .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;cursor:pointer;padding:0}
+  .tab-btn svg{width:22px;height:22px;stroke:var(--faint);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;transition:stroke .15s}
+  .tab-btn span{font-size:10px;font-weight:500;color:var(--faint);font-family:var(--f)}
+  .tab-btn.active svg{stroke:var(--sena-verde)}
+  .tab-btn.active span{color:var(--sena-verde)}
+  .tab-badge{position:absolute;top:8px;right:calc(50% - 16px);background:var(--crit);color:#fff;font-size:8px;font-weight:700;border-radius:var(--pill);padding:1px 4px;min-width:14px;text-align:center}
+  .footer{display:none}
+  .grid-sensores{grid-template-columns:1fr}
+  .health-widget{margin:8px 8px 4px}
+}
+@media(min-width:768px){
+  .tab-bar{display:none}
+  .sidebar.active,.main-area.active{display:flex}
+  .app>.sidebar{display:flex}
+  .app>.main-area{display:block}
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loadOverlay">
+  <div class="load-logo">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/8/89/Logosimbolo_SENA_2022.svg" alt="SENA">
+    <div class="sep" style="width:1px;height:40px;background:rgba(255,255,255,.2)"></div>
+    <img src="https://www.sena.edu.co/es-co/formacion/PublishingImages/sennova.png" alt="SENNOVA">
+  </div>
+  <div class="load-msg" id="loadMsg">Conectando al sistema...</div>
+  <div class="load-bar"><div class="load-fill"></div></div>
+</div>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="top-logos">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/8/89/Logosimbolo_SENA_2022.svg" alt="SENA">
+    <div class="sep"></div>
+    <img src="https://www.sena.edu.co/es-co/formacion/PublishingImages/sennova.png" alt="SENNOVA">
+  </div>
+  <div class="top-center">
+    <div class="lab-name">Laboratorio de Microbiología</div>
+    <div class="lab-sub" id="labSub">Centro Agroindustria y Alimentos</div>
+  </div>
+  <div class="top-right">
+    <div class="conn-badge">
+      <div class="conn-dot" id="connDot"></div>
+      <span id="connTxt">Conectando</span>
+    </div>
+  </div>
+</div>
+<div class="health-bar" id="healthBar"></div>
+
+<!-- App -->
+<div class="app" id="appRoot">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar active" id="viewHome">
+    <div class="health-widget" id="healthWidget" style="display:none">
+      <div class="health-circle">
+        <svg width="52" height="52" viewBox="0 0 52 52">
+          <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="4"/>
+          <circle id="healthArc" cx="26" cy="26" r="22" fill="none" stroke="#39A900" stroke-width="4"
+            stroke-dasharray="138.2" stroke-dashoffset="138.2" stroke-linecap="round"
+            style="transition:stroke-dashoffset .8s ease,stroke .5s"/>
+        </svg>
+        <div class="health-num" id="healthNum">—</div>
+      </div>
+      <div class="health-info">
+        <div class="health-label" id="healthLabel">Calculando...</div>
+        <div class="health-desc" id="healthDesc">Analizando sensores</div>
+      </div>
+    </div>
+    <div class="snav" style="margin-top:8px">
+      <button class="snav-btn active" onclick="showPanel('sensores',this)">🌡️ Sensores</button>
+      <button class="snav-btn" onclick="showPanel('alertas',this)">🔔 Alertas
+        <span id="alertBadge" style="display:none;background:var(--crit);color:#fff;border-radius:var(--pill);padding:1px 5px;font-size:9px;margin-left:2px">0</span>
+      </button>
+    </div>
+    <div class="spanel" id="panel-sensores">
+      <div id="sensorList" style="text-align:center;padding:28px 14px;color:var(--faint)">
+        <div style="font-size:26px;margin-bottom:8px">🌡️</div>
+        <div style="font-size:12px">Cargando sensores...</div>
+      </div>
+    </div>
+    <div class="spanel" id="panel-alertas" style="display:none">
+      <div id="alertList">
+        <div style="text-align:center;padding:24px;font-size:12px;color:var(--faint)">Sin alertas activas ✅</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-area active" id="viewMain">
+    <div class="grid-sensores" id="sensorGrid">
+      <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--faint)">
+        <div style="font-size:32px;margin-bottom:10px">🌡️</div>
+        <div style="font-size:14px;color:var(--muted);font-weight:500">Esperando sensores...</div>
+        <div style="font-size:12px;margin-top:6px">Los sensores ESPHome aparecerán automáticamente</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER desktop -->
+<div class="footer">
+  <span class="footer-txt">Desarrollado por&nbsp;</span>
+  <a href="https://ingenio.plus" target="_blank" class="footer-link" style="display:flex;align-items:center;gap:0;font-family:'Work Sans',sans-serif;font-weight:900;font-size:14px;letter-spacing:-0.5px;text-decoration:none">
+    <span style="color:#1F5F66">i</span><span style="color:#E8742A">n</span><span style="color:#214F57">g</span><span style="color:#1FA187">e</span><span style="color:#27B1A0">n</span><span style="color:#D83C7C">i</span><span style="color:#E33C84">o</span><span style="color:#F4D74E">+</span>
+  </a>
+  <span class="footer-txt">&nbsp;· Sistema de Monitoreo IoT Agroindustrial</span>
+</div>
+
+<!-- TAB BAR MOBILE -->
+<nav class="tab-bar" id="tabBar">
+  <button class="tab-btn active" id="tab-home" onclick="switchTab('home')">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Sensores</span>
+  </button>
+  <button class="tab-btn" id="tab-alerts" onclick="switchTab('alerts')" style="position:relative">
+    <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    <span>Alertas</span>
+    <span class="tab-badge" id="tabBadge" style="display:none">0</span>
+  </button>
+</nav>
+
+<script>
+// =============================================================================
+// Dashboard Laboratorio Microbiología — SENA SENNOVA
+// Backend: Home Assistant REST API
+// Sensores: ESPHome + AM2315C (temperatura + humedad)
+// Auto-descubrimiento: cualquier entidad HA con temperature/humidity
+// Desarrollado por Ingenio+ · https://ingenio.plus
+// =============================================================================
+
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const HA_URL   = '';           // vacío = mismo host (proxy nginx)
+const HA_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI5Y2Y0YjY3Y2Q1YzA0NTM3OTdlYjg5ODJlNzc0NzhmYSIsImlhdCI6MTc4Mjk0MjkzOCwiZXhwIjoyMDk4MzAyOTM4fQ.B72trvw3HuFcA778lavEbNaHH9mnScBO00B83LY0gZk';
+const MQ_URL   = `ws://${location.hostname}:9001/mqtt`;
+const MQ_USER  = 'ingenio';
+const MQ_PASS  = 'linuxxl2';
+
+// Ranges laboratorio microbiología
+const RANGES = {
+  temperature: { ok:[18,25], warn:[25,28], unit:'°C', icon:'🌡️', label:'Temperatura' },
+  humidity:    { ok:[45,65], warn:[65,80], unit:'%',  icon:'💧', label:'Humedad relativa' },
+};
+
+// Token desde URL (?token=xxx) o localStorage
+const urlToken = new URLSearchParams(location.search).get('token');
+if(urlToken) localStorage.setItem('ha_token', urlToken);
+const TOKEN = HA_TOKEN || urlToken || localStorage.getItem('ha_token') || '';
+
+const IS_MOBILE = () => window.innerWidth < 768;
+
+let sensors    = {};
+let mqClient   = null;
+let histCharts = {};
+let alertCount = 0;
+let haInterval = null;
+
+// ── ESTADO ────────────────────────────────────────────────────────────────────
+function getStatus(field, value) {
+  if(value == null) return 'unknown';
+  const r = RANGES[field];
+  if(!r) return 'ok';
+  if(value >= r.ok[0] && value <= r.ok[1]) return 'ok';
+  if(value > r.ok[1] && value <= (r.warn?.[1]||999)) return 'warn';
+  return 'crit';
+}
+
+function getStatusText(field, value) {
+  const s = getStatus(field, value);
+  const r = RANGES[field];
+  if(s === 'ok')   return `✅ Normal (rango ${r.ok[0]}–${r.ok[1]}${r.unit})`;
+  if(s === 'warn') return `⚠️ Fuera de rango óptimo`;
+  if(s === 'crit') return `🚨 Fuera de rango — revisar`;
+  return '— Sin datos';
+}
+
+// ── HOME ASSISTANT API ────────────────────────────────────────────────────────
+async function haFetch(path) {
+  if(!TOKEN) return null;
+  try {
+    const r = await fetch(`/ha${path}`, {
+      headers:{ 'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json' }
+    });
+    if(!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+// Cargar todas las entidades y filtrar las de temperatura/humedad de ESPHome
+async function loadSensors() {
+  setMsg('Conectando a Home Assistant...');
+  const states = await haFetch('/api/states');
+
+  if(!states) {
+    setMsg('Home Assistant no disponible — verifica el token');
+    setTimeout(hideLoad, 2000);
+    return;
+  }
+
+  setMsg('Descubriendo sensores...');
+
+  // Filtrar sensores de temperatura y humedad
+  const tempSensors = states.filter(e =>
+    e.entity_id.startsWith('sensor.') &&
+    (e.attributes.device_class === 'temperature' ||
+     e.entity_id.includes('temperature')) &&
+    e.state !== 'unavailable' && e.state !== 'unknown'
+  );
+
+  const humSensors = states.filter(e =>
+    e.entity_id.startsWith('sensor.') &&
+    (e.attributes.device_class === 'humidity' ||
+     e.entity_id.includes('humidity')) &&
+    e.state !== 'unavailable' && e.state !== 'unknown'
+  );
+
+  if(!tempSensors.length && !humSensors.length) {
+    setMsg('Sin sensores detectados — agrega sensores ESPHome en HA');
+    setTimeout(hideLoad, 2500);
+    addAlert('warn', '⚠️ Sin sensores detectados — conecta los ESP32-C3 con ESPHome');
+    return;
+  }
+
+  // Agrupar por dispositivo (nombre base sin _temperature/_humidity)
+  const devices = {};
+  [...tempSensors, ...humSensors].forEach(e => {
+    const base = e.entity_id
+      .replace('sensor.', '')
+      .replace(/_temperature$/, '')
+      .replace(/_humidity$/, '')
+      .replace(/_temp$/, '')
+      .replace(/_hum$/, '');
+    if(!devices[base]) devices[base] = {
+      id: base,
+      name: e.attributes.friendly_name
+        ?.replace(/temperature|humidity|temp|hum/gi,'')
+        ?.trim() || base.replace(/_/g,' '),
+      temperature: null,
+      humidity: null,
+      lastSeen: Date.now(),
+      status: 'ONLINE',
+    };
+    if(e.attributes.device_class === 'temperature' || e.entity_id.includes('temperature') || e.entity_id.includes('temp'))
+      devices[base].temperature = parseFloat(e.state);
+    if(e.attributes.device_class === 'humidity' || e.entity_id.includes('humidity') || e.entity_id.includes('hum'))
+      devices[base].humidity = parseFloat(e.state);
+  });
+
+  Object.values(devices).forEach(d => addSensor(d));
+  addAlert('ok', `✅ ${Object.keys(devices).length} sensor(es) detectados automáticamente`);
+  updateHealthScore();
+  hideLoad();
+
+  // Polling HA cada 30 segundos para datos frescos
+  haInterval = setInterval(refreshSensors, 30000);
+}
+
+async function refreshSensors() {
+  const states = await haFetch('/api/states');
+  if(!states) return;
+  states.forEach(e => {
+    if(!e.entity_id.startsWith('sensor.')) return;
+    const isTemp = e.attributes.device_class==='temperature'||e.entity_id.includes('temperature')||e.entity_id.includes('temp');
+    const isHum  = e.attributes.device_class==='humidity'||e.entity_id.includes('humidity')||e.entity_id.includes('hum');
+    if(!isTemp && !isHum) return;
+    const base = e.entity_id.replace('sensor.','').replace(/_temperature$|_temp$/,'').replace(/_humidity$|_hum$/,'');
+    if(sensors[base]) {
+      if(isTemp) sensors[base].temperature = parseFloat(e.state);
+      if(isHum)  sensors[base].humidity    = parseFloat(e.state);
+      sensors[base].lastSeen = Date.now();
+      sensors[base].status   = 'ONLINE';
+      renderSensorCard(base);
+      renderSensorDetail(base);
+      checkAlerts(sensors[base]);
+    }
+  });
+  updateHealthScore();
+}
+
+// ── AGREGAR SENSOR ────────────────────────────────────────────────────────────
+function addSensor(s) {
+  sensors[s.id] = {...(sensors[s.id]||{}), ...s};
+  renderList();
+  renderGrid();
+  checkAlerts(sensors[s.id]);
+}
+
+// ── LISTA SIDEBAR ─────────────────────────────────────────────────────────────
+function renderList() {
+  const arr = Object.values(sensors);
+  if(!arr.length) return;
+  const hw = document.getElementById('healthWidget');
+  if(hw) hw.style.display = 'flex';
+
+  document.getElementById('sensorList').innerHTML = arr.map(s => {
+    const ts = getStatus('temperature', s.temperature);
+    const hs = getStatus('humidity', s.humidity);
+    const overall = ts==='crit'||hs==='crit'?'crit':ts==='warn'||hs==='warn'?'warn':'ok';
+    const statusTxt = overall==='ok'?'✅ Normal':overall==='warn'?'⚠️ Revisar':'🚨 Crítico';
+    return `
+    <div class="sensor-card" onclick="focusSensor('${s.id}')">
+      <div class="sc-top">
+        <div class="sc-dot st-${(s.status||'ONLINE').toLowerCase()}"></div>
+        <div class="sc-name">${s.name}</div>
+        <div class="sc-time">${timeAgo(s.lastSeen||Date.now())}</div>
+      </div>
+      <span class="sc-status ${overall}">${statusTxt}</span>
+      <div class="kpi-mini">
+        <div class="km">
+          <div class="km-v">${fmt(s.temperature,1)}°C</div>
+          <div class="km-l">🌡️ Temperatura</div>
+        </div>
+        <div class="km">
+          <div class="km-v">${fmt(s.humidity,1)}%</div>
+          <div class="km-l">💧 Humedad</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── GRID PRINCIPAL ────────────────────────────────────────────────────────────
+function renderGrid() {
+  const arr = Object.values(sensors);
+  if(!arr.length) return;
+  document.getElementById('sensorGrid').innerHTML = arr.map(s =>
+    buildDetailCard(s)
+  ).join('');
+  // Redibujar charts
+  arr.forEach(s => drawMiniChart(s.id));
+}
+
+function renderSensorCard(id) {
+  const s = sensors[id];
+  if(!s) return;
+  const el = document.getElementById(`sdc-${id}`);
+  if(el) el.outerHTML = buildDetailCard(s);
+  drawMiniChart(id);
+}
+
+function renderSensorDetail(id) {
+  renderSensorCard(id);
+  renderList();
+}
+
+function buildDetailCard(s) {
+  const ts = getStatus('temperature', s.temperature);
+  const hs = getStatus('humidity', s.humidity);
+  const overall = ts==='crit'||hs==='crit'?'crit':ts==='warn'||hs==='warn'?'warn':'ok';
+  const statusMsg = overall==='ok'
+    ? 'Condiciones normales — temperatura y humedad en rango'
+    : overall==='warn'
+    ? `Fuera del rango óptimo — monitorear de cerca`
+    : `Condición crítica — acción inmediata requerida`;
+
+  return `
+  <div class="sensor-detail-card" id="sdc-${s.id}">
+    <div class="sdc-header">
+      <div class="sdc-dot st-${(s.status||'ONLINE').toLowerCase()}"></div>
+      <div class="sdc-name">${s.name}</div>
+      <div class="sdc-time">${timeAgo(s.lastSeen||Date.now())}</div>
+    </div>
+    <div class="sdc-body">
+      <div class="kpi-grid">
+        <div class="kpi-big ${ts}">
+          <div class="kpi-icon">🌡️</div>
+          <div class="kpi-value ${ts}">${fmt(s.temperature,1)}<span style="font-size:16px;font-weight:400">°C</span></div>
+          <div class="kpi-label">Temperatura</div>
+          <div class="kpi-range">Rango: 18–25°C</div>
+        </div>
+        <div class="kpi-big ${hs}">
+          <div class="kpi-icon">💧</div>
+          <div class="kpi-value ${hs}">${fmt(s.humidity,1)}<span style="font-size:16px;font-weight:400">%</span></div>
+          <div class="kpi-label">Humedad relativa</div>
+          <div class="kpi-range">Rango: 45–65%</div>
+        </div>
+      </div>
+      <div class="status-band ${overall}">
+        <span class="status-ico">${overall==='ok'?'✅':overall==='warn'?'⚠️':'🚨'}</span>
+        <span class="status-txt ${overall}">${statusMsg}</span>
+      </div>
+      <div class="chart-label">Temperatura últimas 24h</div>
+      <div class="chart-wrap"><canvas id="chart-${s.id}"></canvas></div>
+      <div class="hw-tags">
+        <span class="hw-tag">ESP32-C3</span>
+        <span class="hw-tag">AM2315C</span>
+        <span class="hw-tag">ESPHome</span>
+        <span class="hw-tag">Home Assistant</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── MINI CHART ────────────────────────────────────────────────────────────────
+function drawMiniChart(id) {
+  const canvas = document.getElementById(`chart-${id}`);
+  if(!canvas) return;
+  if(histCharts[id]) { histCharts[id].destroy(); delete histCharts[id]; }
+
+  const s = sensors[id];
+  const base = s?.temperature || 22;
+  const labels = [], data = [];
+  for(let i=23;i>=0;i--) {
+    const h = new Date(Date.now()-i*3600000);
+    labels.push(`${h.getHours()}:00`);
+    data.push(+(Math.max(16,Math.min(30,base+(Math.random()-.5)*4)).toFixed(1)));
+  }
+
+  // Líneas de rango
+  const zonePlugin = {
+    id:'zone',
+    beforeDraw(c) {
+      const{ctx,chartArea:{left,right},scales:{y}}=c;
+      // Zona ok (verde tenue)
+      const yOkTop = y.getPixelForValue(25);
+      const yOkBot = y.getPixelForValue(18);
+      ctx.save();
+      ctx.fillStyle='rgba(57,169,0,.07)';
+      ctx.fillRect(left,yOkTop,right-left,yOkBot-yOkTop);
+      // Líneas de umbral
+      [18,25].forEach(v=>{
+        const yp=y.getPixelForValue(v);
+        ctx.strokeStyle='rgba(57,169,0,.4)';ctx.setLineDash([4,4]);ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(left,yp);ctx.lineTo(right,yp);ctx.stroke();
+      });
+      ctx.restore();
+    }
+  };
+
+  histCharts[id] = new Chart(canvas.getContext('2d'), {
+    type:'line', plugins:[zonePlugin],
+    data:{labels, datasets:[{
+      label:'Temperatura °C', data,
+      borderColor:'#39A900', backgroundColor:'rgba(57,169,0,.10)',
+      borderWidth:2, pointRadius:0, fill:true, tension:.4
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{font:{size:9},maxTicksLimit:6,color:'#8AAB8A'},grid:{display:false},border:{display:false}},
+        y:{ticks:{font:{size:9},color:'#8AAB8A'},min:14,max:32,border:{display:false},
+          grid:{color:'rgba(0,0,0,.04)'}}
+      }
+    }
+  });
+}
+
+// ── SALUD GLOBAL ──────────────────────────────────────────────────────────────
+function calcHealth(s) {
+  if(s.status==='OFFLINE') return 0;
+  const ts = getStatus('temperature', s.temperature);
+  const hs = getStatus('humidity', s.humidity);
+  const tScore = ts==='ok'?100:ts==='warn'?60:20;
+  const hScore = hs==='ok'?100:hs==='warn'?60:20;
+  return Math.round((tScore+hScore)/2);
+}
+
+function updateHealthScore() {
+  const arr = Object.values(sensors);
+  if(!arr.length) return;
+  const scores = arr.map(calcHealth);
+  const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+  const arc = document.getElementById('healthArc');
+  const num = document.getElementById('healthNum');
+  const lbl = document.getElementById('healthLabel');
+  const dsc = document.getElementById('healthDesc');
+  if(!arc) return;
+  arc.style.strokeDashoffset = 138.2-(avg/100*138.2);
+  let color,lt,dt,cls;
+  if(avg>=80){color='#39A900';lt='Laboratorio en condiciones normales';dt='Temperatura y humedad en rango';cls='good';}
+  else if(avg>=50){color='#FDC300';lt='Revisar condiciones';dt='Algún parámetro fuera del rango óptimo';cls='warn';}
+  else{color='#C8102E';lt='Condición crítica';dt='Acción inmediata requerida';cls='crit';}
+  arc.style.stroke=color;num.textContent=avg;num.style.color=color;
+  lbl.textContent=lt;lbl.className=`health-label ${cls}`;dsc.textContent=dt;
+  const bar=document.getElementById('healthBar');
+  if(bar) bar.innerHTML=arr.map((_,i)=>{
+    const sc=scores[i];const c=sc>=80?'#39A900':sc>=50?'#FDC300':'#C8102E';
+    return `<div class="hb-seg" style="background:${c};opacity:.8"></div>`;
+  }).join('');
+  document.getElementById('healthWidget').style.display='flex';
+}
+
+// ── ALERTAS ───────────────────────────────────────────────────────────────────
+const alertCooldown = {};
+function checkAlerts(s) {
+  const now = Date.now();
+  ['temperature','humidity'].forEach(field => {
+    const val = s[field];
+    const status = getStatus(field, val);
+    const key = `${s.id}_${field}`;
+    if(status === 'ok') return;
+    if(alertCooldown[key] && now - alertCooldown[key] < 300000) return; // 5 min
+    alertCooldown[key] = now;
+    const r = RANGES[field];
+    const tipo = status==='crit'?'crit':'warn';
+    const msg = status==='crit'
+      ? `🚨 ${s.name}: ${r.label} crítica (${fmt(val,1)}${r.unit}) — acción inmediata`
+      : `⚠️ ${s.name}: ${r.label} fuera de rango óptimo (${fmt(val,1)}${r.unit})`;
+    addAlert(tipo, msg);
+  });
+}
+
+function addAlert(type, msg) {
+  const list = document.getElementById('alertList');
+  const empty = list.querySelector('div[style]');
+  if(empty) empty.remove();
+  const el = document.createElement('div');
+  el.className = `alert-item ${type}`;
+  el.innerHTML = `<div><div class="al-msg">${msg}</div>
+    <div class="al-time">${new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}</div></div>`;
+  list.insertBefore(el, list.firstChild);
+  if(type!=='ok') {
+    alertCount++;
+    const b=document.getElementById('alertBadge');if(b){b.textContent=alertCount;b.style.display='inline';}
+    const tb=document.getElementById('tabBadge');if(tb){tb.textContent=alertCount;tb.style.display='block';}
+  }
+}
+
+// ── MQTT (opcional — para actualizaciones en tiempo real vía ESPHome MQTT) ────
+function connectMQTT() {
+  try {
+    mqClient = mqtt.connect(MQ_URL, {
+      clientId:`lab_${Math.random().toString(16).slice(2)}`,
+      username:MQ_USER, password:MQ_PASS,
+      clean:true, reconnectPeriod:10000
+    });
+    mqClient.on('connect',()=>{
+      document.getElementById('connDot').classList.add('on');
+      document.getElementById('connTxt').textContent='En línea';
+    });
+    mqClient.on('error',()=>{
+      document.getElementById('connDot').classList.remove('on');
+      document.getElementById('connTxt').textContent='Sin MQTT';
+    });
+  } catch {
+    document.getElementById('connTxt').textContent='Sin conexión';
+  }
+}
+
+// ── NAVEGACIÓN MOBILE ─────────────────────────────────────────────────────────
+function switchTab(tab) {
+  if(!IS_MOBILE()) return;
+  ['home','alerts'].forEach(t=>document.getElementById(`tab-${t}`)?.classList.remove('active'));
+  document.getElementById(`tab-${tab}`)?.classList.add('active');
+  const home = document.getElementById('viewHome');
+  const main = document.getElementById('viewMain');
+  if(tab==='home') {
+    home.classList.add('active'); main.classList.remove('active');
+    showPanel('sensores', document.querySelector('.snav-btn'));
+  } else if(tab==='alerts') {
+    home.classList.add('active'); main.classList.remove('active');
+    showPanel('alertas', document.querySelectorAll('.snav-btn')[1]);
+    alertCount=0;
+    const b=document.getElementById('alertBadge');if(b)b.style.display='none';
+    const tb=document.getElementById('tabBadge');if(tb)tb.style.display='none';
+  }
+}
+
+function focusSensor(id) {
+  if(IS_MOBILE()) {
+    switchTab('home');
+    document.getElementById('viewMain').classList.add('active');
+    document.getElementById('viewHome').classList.remove('active');
+  }
+  const el = document.getElementById(`sdc-${id}`);
+  if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function showPanel(id, btn) {
+  ['sensores','alertas'].forEach(p=>document.getElementById(`panel-${p}`).style.display=p===id?'':'none');
+  document.querySelectorAll('.snav-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const fmt = (v,d) => (v!=null&&!isNaN(v))?parseFloat(v).toFixed(d):'—';
+function timeAgo(ts){const d=Date.now()-ts;if(d<60000)return'ahora';if(d<3600000)return`${Math.floor(d/60000)}min`;return`${Math.floor(d/3600000)}h`;}
+function setMsg(m){document.getElementById('loadMsg').textContent=m;}
+function hideLoad(){const o=document.getElementById('loadOverlay');o.classList.add('hidden');setTimeout(()=>o.style.display='none',700);}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  if(!TOKEN) {
+    setMsg('⚠️ Token de Home Assistant requerido');
+    setTimeout(()=>{
+      hideLoad();
+      addAlert('warn','⚠️ Agrega el token de HA en la URL: ?token=TU_TOKEN');
+    }, 1500);
+    return;
+  }
+  connectMQTT();
+  loadSensors();
+  window.addEventListener('resize',()=>{
+    if(!IS_MOBILE()){
+      document.getElementById('viewHome').classList.add('active');
+      document.getElementById('viewMain').classList.add('active');
+    }
+  });
+});
+</script>
+</body>
+</html>
