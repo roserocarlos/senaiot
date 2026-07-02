@@ -60,7 +60,7 @@ body{height:100%;font-family:var(--f);font-weight:400;background:var(--bg);color
 .loading-overlay{position:fixed;inset:0;background:var(--sena-azul-osc);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .6s}
 .loading-overlay.hidden{opacity:0;pointer-events:none}
 .load-logo{display:flex;gap:16px;align-items:center;margin-bottom:20px}
-.load-logo img{height:48px;filter:brightness(0) invert(1)}
+.load-logo img{height:72px;filter:brightness(0) invert(1)}
 .load-msg{font-size:13px;color:rgba(255,255,255,.7);margin-bottom:16px}
 .load-bar{width:200px;height:3px;background:rgba(255,255,255,.15);border-radius:var(--pill);overflow:hidden}
 .load-fill{height:100%;background:var(--sena-verde);animation:loadbar 2.5s ease forwards}
@@ -73,7 +73,8 @@ body{height:100%;font-family:var(--f);font-weight:400;background:var(--bg);color
   box-shadow:0 2px 12px rgba(57,169,0,.10);position:relative;z-index:100;
 }
 .top-logos{display:flex;align-items:center;gap:12px}
-.top-logos img{height:36px;object-fit:contain}
+.top-logos img{height:44px;object-fit:contain}
+.top-logos img[alt="SENNOVA"]{height:54px}
 .top-logos .sep{width:1px;height:28px;background:var(--line)}
 .top-center{display:flex;flex-direction:column;align-items:center}
 .lab-name{font-size:15px;font-weight:700;color:var(--sena-azul-osc);letter-spacing:-.01em;line-height:1.1}
@@ -242,8 +243,6 @@ body{height:100%;font-family:var(--f);font-weight:400;background:var(--bg);color
 <div class="loading-overlay" id="loadOverlay">
   <div class="load-logo">
     <img src="https://upload.wikimedia.org/wikipedia/commons/8/89/Logosimbolo_SENA_2022.svg" alt="SENA">
-    <div class="sep" style="width:1px;height:40px;background:rgba(255,255,255,.2)"></div>
-    <img src="https://www.sena.edu.co/es-co/formacion/PublishingImages/sennova.png" alt="SENNOVA">
   </div>
   <div class="load-msg" id="loadMsg">Conectando al sistema...</div>
   <div class="load-bar"><div class="load-fill"></div></div>
@@ -353,7 +352,7 @@ body{height:100%;font-family:var(--f);font-weight:400;background:var(--bg);color
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const HA_URL   = '';           // vacío = mismo host (proxy nginx)
-const HA_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI5Y2Y0YjY3Y2Q1YzA0NTM3OTdlYjg5ODJlNzc0NzhmYSIsImlhdCI6MTc4Mjk0MjkzOCwiZXhwIjoyMDk4MzAyOTM4fQ.B72trvw3HuFcA778lavEbNaHH9mnScBO00B83LY0gZk';
+const HA_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIzMGY3NDcwZjgzNTA0OGM3YjM1N2NhNDMzMmQ0YmY5ZSIsImlhdCI6MTc4MzAxODgyMywiZXhwIjoyMDk4Mzc4ODIzfQ._cR1WeYDom-57MUklsdVRu0lyIgcnmqkUGz_c7V_I2g';
 const MQ_URL   = `ws://${location.hostname}:9001/mqtt`;
 const MQ_USER  = 'ingenio';
 const MQ_PASS  = 'linuxxl2';
