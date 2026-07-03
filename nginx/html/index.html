@@ -352,10 +352,10 @@ body{height:100%;font-family:var(--f);font-weight:400;background:var(--bg);color
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const HA_URL   = '';           // vacío = mismo host (proxy nginx)
-const HA_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIzMGY3NDcwZjgzNTA0OGM3YjM1N2NhNDMzMmQ0YmY5ZSIsImlhdCI6MTc4MzAxODgyMywiZXhwIjoyMDk4Mzc4ODIzfQ._cR1WeYDom-57MUklsdVRu0lyIgcnmqkUGz_c7V_I2g';
+const HA_TOKEN = '';   // vacío a propósito — ver setup abajo
 const MQ_URL   = `ws://${location.hostname}:9001/mqtt`;
-const MQ_USER  = 'ingenio';
-const MQ_PASS  = 'linuxxl2';
+// Mosquitto en modo anónimo (ver mosquitto/config/mosquitto.conf) — sin
+// usuario/password, red de laboratorio cerrada.
 
 // Ranges laboratorio microbiología
 const RANGES = {
@@ -743,7 +743,6 @@ function connectMQTT() {
   try {
     mqClient = mqtt.connect(MQ_URL, {
       clientId:`lab_${Math.random().toString(16).slice(2)}`,
-      username:MQ_USER, password:MQ_PASS,
       clean:true, reconnectPeriod:10000
     });
     mqClient.on('connect',()=>{

@@ -66,17 +66,10 @@ section "3/8 · Variables de entorno"
 chmod 600 .env
 source .env
 
-# ── 4. Mosquitto passwd ───────────────────────────────────────────────────────
-section "4/8 · Autenticación Mosquitto"
+# ── 4. Mosquitto ──────────────────────────────────────────────────────────────
+section "4/8 · Mosquitto"
 mkdir -p mosquitto/config
-if [ ! -f mosquitto/config/passwd ]; then
-    docker run --rm -v "$(pwd)/mosquitto/config:/mosquitto/config" eclipse-mosquitto:2.0 \
-        mosquitto_passwd -b -c /mosquitto/config/passwd "$MQTT_USER" "$MQTT_PASSWORD"
-    log "Usuario MQTT '$MQTT_USER' creado"
-else
-    log "passwd ya existe"
-fi
-chmod 644 mosquitto/config/passwd 2>/dev/null || sudo chmod 644 mosquitto/config/passwd
+log "Modo anónimo (mosquitto.conf) — sin usuario/password, listo para usar"
 
 # ── 5. Nginx — inyectar token InfluxDB ───────────────────────────────────────
 section "5/8 · Configurando Nginx"
@@ -88,11 +81,9 @@ else
 fi
 
 # Detectar IP del host Docker para proxy HA
-HOST_IP=$(ip route | grep default | awk '{print $3}' | head -1)
-if [ -n "$HOST_IP" ] && grep -q "172.17.0.1" nginx/nginx.conf; then
-    sed -i "s|172.17.0.1|${HOST_IP}|g" nginx/nginx.conf
-    log "IP host Docker actualizada: $HOST_IP"
-fi
+# (Ya NO hace falta: nginx.conf usa host.docker.internal, que Docker resuelve
+#  solo via extra_hosts en docker-compose.yml — funciona en cualquier red/equipo
+#  sin necesidad de detectar ni reescribir ninguna IP.)
 
 # ── 6. mDNS ──────────────────────────────────────────────────────────────────
 section "6/8 · Configurando acceso por nombre (mDNS)"
@@ -127,8 +118,7 @@ section "8/8 · Verificando servicios"
 sleep 8
 MOSQ=$(docker inspect -f '{{.State.Status}}' sena_mosquitto 2>/dev/null || echo "unknown")
 if [ "$MOSQ" != "running" ]; then
-    warn "Mosquitto reiniciando — corrigiendo permisos"
-    chmod 644 mosquitto/config/passwd 2>/dev/null || sudo chmod 644 mosquitto/config/passwd
+    warn "Mosquitto reiniciando"
     docker compose restart mosquitto; sleep 5
 fi
 MOSQ=$(docker inspect -f '{{.State.Status}}' sena_mosquitto 2>/dev/null)

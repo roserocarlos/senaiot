@@ -1,0 +1,110 @@
+# =============================================================
+# senaiot — SENA SENNOVA Microbiología
+# Nodo: ESP32-C3 + AM2315C (I2C) — Temperatura y Humedad
+# Autodescubrimiento nativo via ESPHome API (sin YAML manual en HA)
+#
+# Para nodo nuevo: copiar esta carpeta, cambiar SOLO device_name y
+# friendly_name abajo. secrets.yaml queda igual (key compartida por
+# todo el lab) — no hay que generar nada por nodo.
+# =============================================================
+
+substitutions:
+  # ---- ÚNICO BLOQUE A CAMBIAR POR CADA NODO NUEVO ----
+  device_name: "am2315c-lab-01"       # único por nodo, minúsculas, sin espacios
+  friendly_name: "Sensor Lab 01"       # nombre visible en HA
+  # -----------------------------------------------------
+
+esphome:
+  name: "${device_name}"
+  friendly_name: "${friendly_name}"
+  comment: "senaiot - SENA SENNOVA Microbiología"
+  min_version: 2024.6.0
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf   # más estable que arduino en C3 para WiFi+I2C simultáneos
+
+# --- Logging ---
+logger:
+  level: INFO
+
+# --- API nativa de ESPHome: esto es lo que permite el          ---
+# --- autodescubrimiento en HA sin tocar configuration.yaml.    ---
+# --- HA detecta el dispositivo via mDNS/zeroconf y lo agrega   ---
+# --- a la integración "ESPHome" automáticamente.                ---
+api:
+  encryption:
+    key: !secret api_encryption_key
+  reboot_timeout: 15min
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+# --- WiFi del laboratorio ---
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  power_save_mode: none   # evita drops de I2C/latencia en HA por ahorro agresivo
+
+  # Fallback: si no conecta, crea un AP para reconfigurar sin recablear
+  ap:
+    ssid: "${device_name}-fallback"
+    password: !secret fallback_ap_password
+
+captive_portal:
+
+# --- mDNS: requerido para que HA descubra el nodo automáticamente ---
+mdns:
+  disabled: false
+
+# --- I2C: SDA/SCL del AM2315C ---
+i2c:
+  sda: GPIO4
+  scl: GPIO5
+  scan: true
+  frequency: 50kHz   # AM2315C es sensible; no usar fast-mode (400kHz)
+
+# --- Sensor AM2315C ---
+sensor:
+  - platform: am2315c
+    # IMPORTANTE: nombres en inglés a propósito. El dashboard (index.html)
+    # agrupa temperatura+humedad de un mismo nodo quitando los sufijos
+    # "_temperature" / "_humidity" del entity_id para armar UNA card por
+    # sensor físico. Si esto se pone en español ("Temperatura"/"Humedad"),
+    # el dashboard NO las agrupa y aparecen como dos sensores separados.
+    temperature:
+      name: "Temperature"
+      id: temp_sensor
+      accuracy_decimals: 1
+      filters:
+        - filter_out: nan
+    humidity:
+      name: "Humidity"
+      id: hum_sensor
+      accuracy_decimals: 1
+      filters:
+        - filter_out: nan
+    address: 0x38
+    update_interval: 30s
+
+  # Diagnóstico: uptime y WiFi signal ayudan a detectar nodos caídos
+  # en el dashboard del laboratorio sin revisar físicamente cada uno.
+  - platform: uptime
+    name: "Uptime"
+    id: uptime_sensor
+    update_interval: 60s
+    entity_category: diagnostic
+
+  - platform: wifi_signal
+    name: "Señal WiFi"
+    update_interval: 60s
+    entity_category: diagnostic
+
+# --- Indicador visual de estado (LED integrado del C3, si aplica) ---
+status_led:
+  pin:
+    number: GPIO8
+    inverted: true
